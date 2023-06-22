@@ -1,0 +1,112 @@
+---
+title: "misdi_code_camp_project"
+output: html_document
+date: "2023-06-22"
+---
+
+PACKAGES
+```{r}
+installed.packages()
+```
+
+```{r}
+install.packages("DT")
+library(readr, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(DT, quietly = TRUE)
+library(magrittr, quietly = TRUE)
+```
+
+DATASETS
+```{r}
+movies_imdb <- read_csv("https://raw.githubusercontent.com/andrewmoles2/rTrainIntroduction/main/r-data-wrangling-1/data/IMDb%20movies.csv")
+
+bechdel <- read_csv("https://raw.githubusercontent.com/andrewmoles2/rTrainIntroduction/main/r-data-wrangling-1/data/raw_bechdel.csv")
+```
+
+CLEAN DATA
+```{r}
+movies_imdb$imdb_title_id <- parse_number(movies_imdb$imdb_title_id)
+```
+
+JOIN
+```{r}
+imdb_bechdel <- inner_join(x = bechdel, y = movies_imdb,
+                          by = c("imdb_id" = "imdb_title_id", "year", "title"))
+```
+
+WRANGLING
+```{r}
+global_rating <- imdb_bechdel %>%
+  group_by(rating) %>%
+  summarise(avg_vote = mean(avg_vote))
+
+global_rating <- global_rating %>%
+  mutate(origen = rep("Global", 4), .before = rating)
+global_rating
+
+#imdb_bechdel %>% 
+#  group_by(country) %>%
+#  summarize (Q = n()) %>%
+#  arrange(desc(Q))
+
+usa_rating <- imdb_bechdel %>%
+  filter(country == "USA") %>%
+  group_by(rating) %>%
+  summarise(avg_vote = mean(avg_vote))
+
+usa_rating <- usa_rating %>%
+  mutate(origen = rep("USA", 4), .before = rating)
+usa_rating
+
+uk_rating <- imdb_bechdel %>%
+  filter(country == "UK") %>%
+  group_by(rating) %>%
+  summarise(avg_vote = mean(avg_vote))
+
+uk_rating <- uk_rating %>%
+  mutate(origen = rep("UK", 4), .before = rating)
+uk_rating
+
+canada_rating <- imdb_bechdel %>%
+  filter(country == "Canada") %>%
+  group_by(rating) %>%
+  summarise(avg_vote = mean(avg_vote))
+
+canada_rating <- canada_rating %>%
+  mutate(origen = rep("Canada", 4), .before = rating)
+canada_rating
+
+tendencies <- rbind(global_rating, usa_rating, uk_rating, canada_rating)
+tendencies
+```
+
+
+VIZ
+```{r}
+#library(ggplot2)
+#install.packages("viridis")
+#install.packages("hrbrthemes")
+#library(viridis)
+#library(hrbrthemes)
+
+top3 <- ggplot(tendencies, aes(x = rating, y = avg_vote, colour = origen)) +
+  geom_line() +
+  geom_point(shape=15) +
+  labs(title = "Top 3 Producing Countries Trends: \n IMDb & bechdel rating", x = "Bechdel Rating", y = "IMDb Ranking", colour = "") +
+  theme_ipsum_tw()
+  #theme_ipsum_es()
+top3
+
+ggsave(filename = "top3.png", top3,
+       units = "px", bg = "white")
+```
+
+WRANGLING 2
+```{r}
+data1 <- imdb_bechdel %>%
+  group_by(year) %>%
+  summarise(avg_bechdel = mean(rating))
+data1
+
+```
