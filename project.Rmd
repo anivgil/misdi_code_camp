@@ -6,15 +6,16 @@ date: "2023-06-22"
 
 PACKAGES
 ```{r}
-installed.packages()
+#installed.packages()
 ```
 
 ```{r}
-install.packages("DT")
+#install.packages("DT")
 library(readr, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 library(DT, quietly = TRUE)
 library(magrittr, quietly = TRUE)
+library(tidyr, quietly = TRUE)
 ```
 
 DATASETS
@@ -84,11 +85,11 @@ tendencies
 
 VIZ
 ```{r}
-#library(ggplot2)
+library(ggplot2)
 #install.packages("viridis")
 #install.packages("hrbrthemes")
-#library(viridis)
-#library(hrbrthemes)
+library(viridis)
+library(hrbrthemes)
 
 top3 <- ggplot(tendencies, aes(x = rating, y = avg_vote, colour = origen)) +
   geom_line() +
@@ -104,9 +105,74 @@ ggsave(filename = "top3.png", top3,
 
 WRANGLING 2
 ```{r}
-data1 <- imdb_bechdel %>%
+year_rating  <- imdb_bechdel %>%
   group_by(year) %>%
+  filter(year >= 1950) %>%
   summarise(avg_bechdel = mean(rating))
-data1
+year_rating
 
 ```
+
+VIZ 2
+
+```{r}
+evolution <- ggplot(year_rating, aes(x = year, y = avg_bechdel)) +
+  geom_smooth(color = "purple", linewidth = 0.5) +
+  geom_segment(color = "purple", lty = 4, aes(x = year, xend = year, y = 0, yend = avg_bechdel)) +
+  geom_point(size=3, color="purple", fill=alpha("pink", 0.3), alpha=0.7, shape=21, stroke=1) +
+    labs(title = "Bechdel rating evolution from 1950", x = "Year", y = "Average Bechdel Rating", colour = "") +
+  theme_ipsum_tw()
+evolution
+
+ggsave(filename = "evolution.png", evolution,
+       units = "px", width = 2500, bg = "white")
+```
+
+
+WRANGLING 3
+
+```{r}
+#install.packages("tidyr")
+library(tidyr)
+country_bechdel <- imdb_bechdel
+country_bechdel = separate_rows(country_bechdel,country,sep = ", ")
+
+country_bechdel <- country_bechdel %>%
+  group_by(country) %>%
+  summarise(avg_bechdel = mean(rating))
+country_bechdel
+
+
+```
+
+VIZ 3
+```{r}
+#install.packages(c("cowplot", "googleway", "ggrepel", "ggspatial", "libwgeom", "sf", "rnaturalearth", "rnaturalearthdata"))
+library("sf")
+library("rnaturalearth")
+library("rnaturalearthdata")
+#install.packages("RColorBrewer")
+library(RColorBrewer)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+world_modified <- left_join(x=world, y = country_bechdel, by = c("name" = "country"))
+
+#glimpse(world_modified)
+
+#world_modified <- world_modified %>%
+#  mutate_at("avg_bechdel", ~replace_na(.,-1))
+
+countries <- ggplot(data = world_modified) +
+  geom_sf(aes(fill = avg_bechdel)) +
+  scale_fill_distiller(palette = "YlGnBu", direction = 1, na.value = "grey90") +
+  labs(title = "Bechdel rating per country", fill = "Bechdel rating") +
+  theme_ipsum_tw()
+countries
+
+ggsave(filename = "countries.png", countries,
+       units = "px", width = 2500, bg = "white")
+
+```
+
