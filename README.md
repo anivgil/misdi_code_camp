@@ -10,11 +10,3 @@ Production country performance in terms of women's representation in films (hist
 
 Global tendencies on woman's representation in films and Top 3 producing countries
 ![](top3.png)
-
-------
-## Eurovision plot
-
-Eurovision's winners from the '70s to 2022.
-
-![](winners_plot.png)
-
